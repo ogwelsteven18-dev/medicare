@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-medicare-hms-key-change-in-prod-2024')
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['medicare-5pf5.onrender.com', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -103,3 +103,6 @@ AIRTEL_BASE_URL = os.environ.get('AIRTEL_BASE_URL', 'https://openapiuat.airtel.a
 
 CONSULTATION_FEE = 50000
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Add the deployed domain to CSRF_TRUSTED_ORIGINS
+CSRF_TRUSTED_ORIGINS = ['https://medicare-5pf5.onrender.com']
