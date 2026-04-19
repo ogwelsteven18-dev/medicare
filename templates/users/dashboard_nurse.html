@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Nurse Dashboard — MediCare HMS{% endblock %}
+{% block page_title %}Nurse Dashboard{% endblock %}
+{% block content %}
+<style>
+.action-tile{border-radius:14px;padding:20px;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;border:none;text-align:center}
+.action-tile:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.action-tile .tile-icon{font-size:32px;width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.action-tile .tile-label{font-size:14px;font-weight:600;color:#2c3e50}
+.action-tile .tile-sub{font-size:12px;color:#888}
+.vitals-strip{padding:12px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:12px}
+.vitals-strip:last-child{border-bottom:none}
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>Hello, {{ user.first_name }}! 🩺</h1>
+    <p style="color:#888;margin:0;font-size:14px">{{ today|date:"l, d F Y" }} &nbsp;·&nbsp; <span class="badge-pill role-nurse">Nurse</span></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'patients:patient_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Register Patient</a>
+  </div>
+</div>
+
+<!-- Nurse KPI -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-top:4px solid #1a6b9a">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-people-fill me-1"></i>Active Patients</div>
+      <div style="font-size:36px;font-weight:700;color:#1a6b9a;margin:8px 0">{{ total_patients }}</div>
+      <a href="{% url 'patients:patient_list' %}?status=Active" style="font-size:12px;color:#1a6b9a;text-decoration:none">View all active →</a>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-top:4px solid #27ae60">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-calendar-day me-1"></i>Today's Appointments</div>
+      <div style="font-size:36px;font-weight:700;color:#27ae60;margin:8px 0">{{ todays_appointments }}</div>
+      <a href="{% url 'appointments:appointment_list' %}" style="font-size:12px;color:#27ae60;text-decoration:none">View schedule →</a>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-top:4px solid #f39c12">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-heart-pulse me-1"></i>Vitals Recorded Today</div>
+      <div style="font-size:36px;font-weight:700;color:#f39c12;margin:8px 0">{{ vitals_today }}</div>
+      <span style="font-size:12px;color:#888">Updated today</span>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-top:4px solid #e74c3c">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-exclamation-triangle me-1"></i>New Admissions</div>
+      <div style="font-size:36px;font-weight:700;color:#e74c3c;margin:8px 0">{{ new_today }}</div>
+      <span style="font-size:12px;color:#888">Admitted today</span>
+    </div>
+  </div>
+</div>
+
+<!-- Action Tiles -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-grid me-2"></i>Clinical Tasks</div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <a href="{% url 'patients:patient_create' %}" class="action-tile" style="background:#e8f4fd">
+          <div class="tile-icon" style="background:#1a6b9a22;color:#1a6b9a"><i class="bi bi-person-plus-fill"></i></div>
+          <div class="tile-label">Register Patient</div>
+          <div class="tile-sub">Add new patient record</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{% url 'patients:patient_list' %}" class="action-tile" style="background:#d5f5e3">
+          <div class="tile-icon" style="background:#27ae6022;color:#27ae60"><i class="bi bi-heart-pulse-fill"></i></div>
+          <div class="tile-label">Record Vitals</div>
+          <div class="tile-sub">Update patient vitals</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{% url 'appointments:appointment_list' %}" class="action-tile" style="background:#fef9e7">
+          <div class="tile-icon" style="background:#f39c1222;color:#f39c12"><i class="bi bi-calendar-check-fill"></i></div>
+          <div class="tile-label">Today's Schedule</div>
+          <div class="tile-sub">View all appointments</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{% url 'patients:patient_list' %}?status=Active" class="action-tile" style="background:#fde8e8">
+          <div class="tile-icon" style="background:#e74c3c22;color:#e74c3c"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+          <div class="tile-label">Active Ward</div>
+          <div class="tile-sub">View active patients</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Patients needing vitals + Today's schedule -->
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-lines-fill me-2"></i>Patients — Needs Attention</span>
+        <a href="{% url 'patients:patient_list' %}" class="btn btn-sm btn-outline-primary">All Patients</a>
+      </div>
+      {% for p in recent_patients %}
+      <div class="vitals-strip">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a6b9a,#0f2744);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0">{{ p.name|first|upper }}</div>
+        <div class="flex-grow-1">
+          <div style="font-weight:500;font-size:14px"><a href="{% url 'patients:patient_detail' p.pk %}" style="text-decoration:none;color:#2c3e50">{{ p.name }}</a></div>
+          <div style="font-size:12px;color:#888">{{ p.age }} yrs &middot; {{ p.blood_type|default:"Blood type unknown" }} &middot; Dr. {{ p.assigned_doctor.get_full_name|default:"Unassigned" }}</div>
+        </div>
+        <div class="d-flex gap-1">
+          <a href="{% url 'patients:add_vitals' p.pk %}" class="btn btn-sm btn-success py-0 px-2" title="Record Vitals"><i class="bi bi-heart-pulse"></i></a>
+          <a href="{% url 'patients:patient_detail' p.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2" title="View Patient"><i class="bi bi-eye"></i></a>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-5 text-muted"><i class="bi bi-people" style="font-size:40px;opacity:.2"></i><div class="mt-2">No active patients</div></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>Today's Appointment Schedule</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Patient</th><th>Doctor</th><th>Time</th><th>Type</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for a in todays_appointment_list %}
+          <tr>
+            <td style="font-weight:500;font-size:13px">{{ a.patient.name }}</td>
+            <td style="font-size:12px;color:#888">Dr. {{ a.doctor.get_full_name|default:"—" }}</td>
+            <td style="font-size:13px;white-space:nowrap">{{ a.time|time:"H:i" }}</td>
+            <td style="font-size:12px">{{ a.get_appointment_type_display }}</td>
+            <td><span class="badge-pill status-{{ a.status|lower }}">{{ a.status }}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="5" class="text-center py-4 text-muted">No appointments scheduled today</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

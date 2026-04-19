@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Reports & Analytics{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-bar-chart-fill me-2"></i>Reports &amp; Analytics <small style="font-size:14px;color:#888;font-weight:400">{{ year }}</small></h1>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#1a6b9a,#134f73)"><div class="stat-icon"><i class="bi bi-people-fill"></i></div><div class="stat-value">{{ total_patients }}</div><div class="stat-label">Total Patients</div><div style="font-size:12px;opacity:.7;margin-top:6px">{{ active_patients }} active</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#27ae60,#1e8449)"><div class="stat-icon"><i class="bi bi-cash-coin"></i></div><div class="stat-value" style="font-size:20px">UGX {{ total_revenue|floatformat:0 }}</div><div class="stat-label">Total Revenue</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#f39c12,#d68910)"><div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div><div class="stat-value">{{ total_appointments }}</div><div class="stat-label">Appointments</div><div style="font-size:12px;opacity:.7;margin-top:6px">{{ completed_appointments }} completed</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#8e44ad,#6c3483)"><div class="stat-icon"><i class="bi bi-receipt"></i></div><div class="stat-value">{{ pending_bills }}</div><div class="stat-label">Pending Bills</div></div></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6"><div class="card p-3 text-center"><div style="font-size:28px;font-weight:700;color:#1a6b9a">{{ total_doctors }}</div><div style="font-size:13px;color:#888">Doctors</div></div></div>
+  <div class="col-md-3 col-6"><div class="card p-3 text-center"><div style="font-size:28px;font-weight:700;color:#27ae60">{{ total_nurses }}</div><div style="font-size:13px;color:#888">Nurses</div></div></div>
+  <div class="col-md-3 col-6"><div class="card p-3 text-center"><div style="font-size:28px;font-weight:700;color:#e74c3c">{{ active_patients }}</div><div style="font-size:13px;color:#888">Active Patients</div></div></div>
+  <div class="col-md-3 col-6"><div class="card p-3 text-center"><div style="font-size:28px;font-weight:700;color:#8e44ad">{{ completed_appointments }}</div><div style="font-size:13px;color:#888">Completed Appts</div></div></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-lg-8"><div class="card"><div class="card-header"><i class="bi bi-graph-up me-2"></i>Monthly Revenue ({{ year }})</div><div class="card-body"><canvas id="revenueChart" height="90"></canvas></div></div></div>
+  <div class="col-lg-4"><div class="card"><div class="card-header"><i class="bi bi-pie-chart me-2"></i>Appointment Status</div><div class="card-body"><canvas id="apptStatusChart" height="190"></canvas></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card"><div class="card-header"><i class="bi bi-people me-2"></i>Monthly New Patients</div><div class="card-body"><canvas id="patientsChart" height="110"></canvas></div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-header"><i class="bi bi-credit-card me-2"></i>Revenue by Payment Method</div><div class="card-body"><canvas id="paymentMethodChart" height="110"></canvas></div></div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const labels = {{ labels_json|safe }};
+const revenueData = {{ monthly_revenue_json|safe }};
+const patientsData = {{ monthly_patients_json|safe }};
+const apptData = {{ monthly_appointments_json|safe }};
+const statusData = {{ status_counts|safe }};
+const pmData = {{ payment_methods|safe }};
+new Chart(document.getElementById('revenueChart'),{type:'bar',data:{labels,datasets:[{label:'Revenue (UGX)',data:revenueData,backgroundColor:'rgba(26,107,154,0.7)',borderColor:'#1a6b9a',borderWidth:1,borderRadius:6},{label:'Appointments',data:apptData,type:'line',borderColor:'#f39c12',backgroundColor:'rgba(243,156,18,.15)',tension:0.4,yAxisID:'y1'}]},options:{responsive:true,interaction:{mode:'index'},scales:{y:{beginAtZero:true,ticks:{callback:v=>'UGX '+v.toLocaleString()}},y1:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false}}},plugins:{legend:{position:'top'}}}});
+new Chart(document.getElementById('apptStatusChart'),{type:'doughnut',data:{labels:statusData.map(s=>s.status),datasets:[{data:statusData.map(s=>s.c),backgroundColor:['#3498db','#27ae60','#f39c12','#e74c3c','#9b59b6'],borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+new Chart(document.getElementById('patientsChart'),{type:'line',data:{labels,datasets:[{label:'New Patients',data:patientsData,borderColor:'#27ae60',backgroundColor:'rgba(39,174,96,.1)',fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:'#27ae60'}]},options:{responsive:true,scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('paymentMethodChart'),{type:'bar',data:{labels:pmData.map(p=>p.payment_method.replace('_',' ')),datasets:[{label:'Revenue (UGX)',data:pmData.map(p=>parseFloat(p.total||0)),backgroundColor:['#1a6b9a','#e74c3c','#27ae60','#f39c12'],borderRadius:6},{label:'Transactions',data:pmData.map(p=>p.c),type:'line',borderColor:'#8e44ad',backgroundColor:'transparent',yAxisID:'y1'}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{callback:v=>'UGX '+v.toLocaleString()}},y1:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false}}},plugins:{legend:{position:'top'}}}});
+</script>
+{% endblock %}

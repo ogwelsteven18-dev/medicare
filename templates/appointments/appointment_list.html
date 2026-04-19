@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load hms_tags %}
+{% block title %}Appointments{% endblock %}
+{% block page_title %}Appointments{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-calendar-check-fill me-2"></i>Appointments</h1>
+  <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary"><i class="bi bi-calendar-plus me-1"></i>Book Appointment</a>
+</div>
+<div class="card mb-3"><div class="card-body py-2">
+  <form class="d-flex gap-2 flex-wrap" method="get">
+    <select name="status" class="form-select" style="width:180px">
+      <option value="">All Status</option>
+      {% for s in "Scheduled,Confirmed,Completed,Cancelled,Rescheduled"|split:"," %}
+      <option {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-filter"></i> Filter</button>
+    {% if status_filter %}<a href="{% url 'appointments:appointment_list' %}" class="btn btn-outline-secondary">Clear</a>{% endif %}
+  </form>
+</div></div>
+<div class="card"><div class="table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Patient</th><th>Doctor</th><th>Date & Time</th><th>Type</th><th>Reason</th><th>Fee</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for a in appointments %}
+    <tr>
+      <td><a href="{% url 'patients:patient_detail' a.patient.pk %}" style="text-decoration:none;font-weight:500">{{ a.patient.name }}</a></td>
+      <td>Dr. {{ a.doctor.get_full_name|default:"—" }}</td>
+      <td style="white-space:nowrap">{{ a.date|date:"d M Y" }}<br><small class="text-muted">{{ a.time|time:"H:i" }}</small></td>
+      <td><small>{{ a.get_appointment_type_display }}</small></td>
+      <td style="max-width:150px;font-size:13px">{{ a.reason|truncatechars:50 }}</td>
+      <td>UGX {{ a.fee|floatformat:0 }}</td>
+      <td><span class="badge-pill status-{{ a.status|lower }}">{{ a.status }}</span></td>
+      <td>
+        <a href="{% url 'appointments:appointment_detail' a.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2 me-1"><i class="bi bi-eye"></i></a>
+        {% if request.user.role in 'admin,doctor,nurse' %}
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2 dropdown-toggle" data-bs-toggle="dropdown">Status</button>
+          <ul class="dropdown-menu">
+            {% for s in "Confirmed,Completed,Cancelled,Rescheduled"|split:"," %}
+            <li><form method="post" action="{% url 'appointments:appointment_update_status' a.pk %}">{% csrf_token %}<input type="hidden" name="status" value="{{ s }}"><button class="dropdown-item" type="submit">{{ s }}</button></form></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="8" class="text-center py-5 text-muted">No appointments found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

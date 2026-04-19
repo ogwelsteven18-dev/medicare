@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Add Bill Item{% endblock %}
+{% block page_title %}Add Item to Bill{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+<div class="card"><div class="card-header">Add Item — Invoice {{ bill.invoice_number }}</div>
+<div class="card-body p-4">
+<form method="post">{% csrf_token %}
+<div class="row g-3">
+  <div class="col-12"><label class="form-label">Type</label>{{ form.item_type }}</div>
+  <div class="col-12"><label class="form-label">Description *</label>{{ form.description }}</div>
+  <div class="col-md-4"><label class="form-label">Quantity</label>{{ form.quantity }}</div>
+  <div class="col-md-8"><label class="form-label">Unit Price (UGX)</label>{{ form.unit_price }}</div>
+  <div class="col-12"><button type="submit" class="btn btn-primary me-2">Add Item</button><a href="{% url 'billing:bill_detail' bill.pk %}" class="btn btn-outline-secondary">Cancel</a></div>
+</div>
+</form>
+</div></div>
+</div></div>
+{% endblock %}

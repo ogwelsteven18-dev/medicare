@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — MediCare HMS{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block content %}
+<style>
+.quick-action{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 12px;border-radius:12px;text-decoration:none;transition:all .2s;border:2px solid transparent;text-align:center;gap:8px}
+.quick-action:hover{transform:translateY(-3px);border-color:currentColor;box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.quick-action .qa-icon{font-size:28px;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.quick-action .qa-label{font-size:13px;font-weight:600;color:#2c3e50}
+.kpi-card{border-radius:14px;padding:20px 24px;color:#fff;border:none;position:relative;overflow:hidden;display:flex;align-items:center;gap:16px}
+.kpi-card::after{content:'';position:absolute;right:-15px;top:-15px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.12)}
+.kpi-icon{font-size:28px;flex-shrink:0;opacity:.9}
+.kpi-value{font-size:28px;font-weight:700;line-height:1}
+.kpi-label{font-size:12px;opacity:.85;margin-top:3px}
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>System Overview</h1>
+    <p style="color:#888;margin:0;font-size:14px">{{ today|date:"l, d F Y" }} &nbsp;·&nbsp; <span class="badge-pill role-admin">Administrator</span></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'patients:patient_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Add Patient</a>
+    <a href="{% url 'users:user_create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-gear me-1"></i>Add User</a>
+    <a href="{% url 'reports:dashboard' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-bar-chart me-1"></i>Reports</a>
+  </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#1a6b9a,#0f2744)">
+      <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+      <div><div class="kpi-value">{{ total_patients }}</div><div class="kpi-label">Total Patients</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#27ae60,#1e8449)">
+      <div class="kpi-icon"><i class="bi bi-calendar-check-fill"></i></div>
+      <div><div class="kpi-value">{{ total_appointments }}</div><div class="kpi-label">Total Appointments</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#f39c12,#d68910)">
+      <div class="kpi-icon"><i class="bi bi-receipt"></i></div>
+      <div><div class="kpi-value">{{ pending_bills }}</div><div class="kpi-label">Pending Bills</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#8e44ad,#6c3483)">
+      <div class="kpi-icon"><i class="bi bi-cash-coin"></i></div>
+      <div><div class="kpi-value" style="font-size:18px">UGX {{ total_revenue|floatformat:0 }}</div><div class="kpi-label">Revenue Collected</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Staff Summary Row -->
+<div class="row g-3 mb-4">
+  <div class="col-4">
+    <div class="card p-3 text-center h-100">
+      <div style="font-size:32px;font-weight:700;color:#1a6b9a">{{ total_doctors }}</div>
+      <div style="font-size:12px;color:#888;margin-top:2px">👨‍⚕️ Doctors</div>
+      <a href="{% url 'users:user_list' %}?role=doctor" class="btn btn-outline-primary btn-sm mt-2">Manage</a>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card p-3 text-center h-100">
+      <div style="font-size:32px;font-weight:700;color:#27ae60">{{ total_nurses }}</div>
+      <div style="font-size:12px;color:#888;margin-top:2px">👩‍⚕️ Nurses</div>
+      <a href="{% url 'users:user_list' %}?role=nurse" class="btn btn-outline-success btn-sm mt-2">Manage</a>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card p-3 text-center h-100">
+      <div style="font-size:32px;font-weight:700;color:#f39c12">{{ pending_appointments }}</div>
+      <div style="font-size:12px;color:#888;margin-top:2px">📅 Pending Appts</div>
+      <a href="{% url 'appointments:appointment_list' %}?status=Scheduled" class="btn btn-outline-warning btn-sm mt-2">Review</a>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions</div>
+  <div class="card-body">
+    <div class="row g-2">
+      <div class="col-6 col-md-2">
+        <a href="{% url 'patients:patient_create' %}" class="quick-action" style="background:#e8f4fd;color:#1a6b9a">
+          <div class="qa-icon" style="background:#1a6b9a22"><i class="bi bi-person-plus-fill"></i></div>
+          <div class="qa-label">Add Patient</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-2">
+        <a href="{% url 'appointments:appointment_create' %}" class="quick-action" style="background:#d5f5e3;color:#1e8449">
+          <div class="qa-icon" style="background:#27ae6022"><i class="bi bi-calendar-plus-fill"></i></div>
+          <div class="qa-label">Book Appointment</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-2">
+        <a href="{% url 'billing:bill_create' %}" class="quick-action" style="background:#fef9e7;color:#d68910">
+          <div class="qa-icon" style="background:#f39c1222"><i class="bi bi-receipt-cutoff"></i></div>
+          <div class="qa-label">Create Bill</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-2">
+        <a href="{% url 'pharmacy:medicine_create' %}" class="quick-action" style="background:#fde8e8;color:#c0392b">
+          <div class="qa-icon" style="background:#e74c3c22"><i class="bi bi-capsule-pill"></i></div>
+          <div class="qa-label">Add Medicine</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-2">
+        <a href="{% url 'users:user_create' %}" class="quick-action" style="background:#e8d5f5;color:#6c3483">
+          <div class="qa-icon" style="background:#8e44ad22"><i class="bi bi-person-gear"></i></div>
+          <div class="qa-label">Create User</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-2">
+        <a href="{% url 'reports:dashboard' %}" class="quick-action" style="background:#d6eaf8;color:#1a5276">
+          <div class="qa-icon" style="background:#2980b922"><i class="bi bi-bar-chart-fill"></i></div>
+          <div class="qa-label">View Reports</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tables Row -->
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>Recent Appointments</span>
+        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Type</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for a in recent_appointments %}
+          <tr>
+            <td><a href="{% url 'patients:patient_detail' a.patient.pk %}" style="text-decoration:none;font-weight:500">{{ a.patient.name }}</a></td>
+            <td style="font-size:13px">Dr. {{ a.doctor.get_full_name|default:a.doctor.username }}</td>
+            <td style="font-size:13px;white-space:nowrap">{{ a.date|date:"d M Y" }}</td>
+            <td style="font-size:12px">{{ a.get_appointment_type_display }}</td>
+            <td><span class="badge-pill status-{{ a.status|lower }}">{{ a.status }}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="5" class="text-center py-4 text-muted">No appointments yet</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-plus me-2"></i>Recent Patients</span>
+        <a href="{% url 'patients:patient_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <ul class="list-group list-group-flush">
+      {% for p in recent_patients %}
+      <li class="list-group-item d-flex align-items-center gap-3 py-2">
+        <div style="width:36px;height:36px;border-radius:50%;background:#e8f4fd;color:#1a6b9a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">{{ p.name|first|upper }}</div>
+        <div class="flex-grow-1">
+          <a href="{% url 'patients:patient_detail' p.pk %}" style="text-decoration:none;font-weight:500;font-size:14px;color:#2c3e50">{{ p.name }}</a>
+          <div style="font-size:12px;color:#888">{{ p.gender }}, {{ p.age }} yrs &middot; <span class="badge bg-danger" style="font-size:10px">{{ p.blood_type|default:"?" }}</span></div>
+        </div>
+        <span class="badge-pill status-{{ p.status|lower }}" style="font-size:11px">{{ p.status }}</span>
+      </li>
+      {% empty %}<li class="list-group-item text-center py-4 text-muted">No patients yet</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load hms_tags %}
+{% block title %}Billing{% endblock %}
+{% block page_title %}Billing{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-receipt-cutoff me-2"></i>Bills</h1>
+  {% if request.user.role == 'admin' %}<a href="{% url 'billing:bill_create' %}" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Create Bill</a>{% endif %}
+</div>
+<div class="card mb-3"><div class="card-body py-2">
+  <form class="d-flex gap-2 flex-wrap" method="get">
+    <select name="status" class="form-select" style="width:180px">
+      <option value="">All Status</option>
+      {% for s in "Pending,Partial,Paid,Overdue,Cancelled"|split:"," %}
+      <option {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline-primary" type="submit"><i class="bi bi-filter"></i> Filter</button>
+    {% if status_filter %}<a href="{% url 'billing:bill_list' %}" class="btn btn-outline-secondary">Clear</a>{% endif %}
+  </form>
+</div></div>
+<div class="card"><div class="table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Invoice #</th><th>Patient</th><th>Date</th><th>Subtotal</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for b in bills %}
+    <tr>
+      <td style="font-size:13px"><a href="{% url 'billing:bill_detail' b.pk %}" style="text-decoration:none">{{ b.invoice_number }}</a></td>
+      <td><a href="{% url 'patients:patient_detail' b.patient.pk %}" style="text-decoration:none;font-weight:500">{{ b.patient.name }}</a></td>
+      <td style="font-size:13px;white-space:nowrap">{{ b.date|date:"d M Y" }}</td>
+      <td>UGX {{ b.subtotal|floatformat:0 }}</td>
+      <td class="fw-bold">UGX {{ b.total|floatformat:0 }}</td>
+      <td style="color:#27ae60">UGX {{ b.amount_paid|floatformat:0 }}</td>
+      <td style="color:#e74c3c;font-weight:600">UGX {{ b.balance|floatformat:0 }}</td>
+      <td><span class="badge-pill status-{{ b.status|lower }}">{{ b.status }}</span></td>
+      <td>
+        <a href="{% url 'billing:bill_detail' b.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2 me-1"><i class="bi bi-eye"></i></a>
+        {% if b.balance > 0 %}<a href="{% url 'payments:initiate_payment' b.pk %}" class="btn btn-sm btn-success py-0 px-2 me-1"><i class="bi bi-credit-card"></i></a>{% endif %}
+        <a href="{% url 'billing:invoice_pdf' b.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-2" target="_blank"><i class="bi bi-printer"></i></a>
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="9" class="text-center py-5 text-muted">No bills found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

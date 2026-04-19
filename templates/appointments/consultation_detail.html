@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Consultation Detail{% endblock %}
+{% block page_title %}Consultation Detail{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-stethoscope me-2"></i>Consultation #{{ consultation.pk }}</span>
+    <span class="badge-pill status-{{ consultation.status|lower }}">{{ consultation.status }}</span>
+  </div>
+  <div class="card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-md-6"><label class="form-label text-muted">Patient</label><div class="fw-bold"><a href="{% url 'patients:patient_detail' consultation.patient.pk %}">{{ consultation.patient.name }}</a></div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Doctor</label><div class="fw-bold">Dr. {{ consultation.doctor.get_full_name|default:"—" }}</div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Date</label><div>{{ consultation.date|date:"d M Y H:i" }}</div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Fee</label><div class="fw-bold text-success">UGX {{ consultation.fee|floatformat:0 }}</div></div>
+      <div class="col-12"><label class="form-label text-muted">Chief Complaint</label><div>{{ consultation.chief_complaint }}</div></div>
+      {% if consultation.diagnosis %}<div class="col-12"><label class="form-label text-muted">Diagnosis</label><div>{{ consultation.diagnosis }}</div></div>{% endif %}
+      {% if consultation.treatment_plan %}<div class="col-12"><label class="form-label text-muted">Treatment Plan</label><div>{{ consultation.treatment_plan }}</div></div>{% endif %}
+      {% if consultation.follow_up_date %}<div class="col-12"><label class="form-label text-muted">Follow-up Date</label><div>{{ consultation.follow_up_date|date:"d M Y" }}</div></div>{% endif %}
+    </div>
+  </div>
+</div>
+{% if request.user.role in 'admin,doctor' %}
+<div class="card"><div class="card-header">Update Consultation</div>
+<div class="card-body p-4">
+<form method="post">{% csrf_token %}
+<div class="row g-3">
+  <div class="col-12"><label class="form-label">Diagnosis</label>{{ form.diagnosis }}</div>
+  <div class="col-12"><label class="form-label">Treatment Plan</label>{{ form.treatment_plan }}</div>
+  <div class="col-md-6"><label class="form-label">Status</label>{{ form.status }}</div>
+  <div class="col-md-6"><label class="form-label">Follow-up Date</label>{{ form.follow_up_date }}</div>
+  <div class="col-12"><label class="form-label">Notes</label>{{ form.notes }}</div>
+  <div class="col-12"><button type="submit" class="btn btn-primary">Update</button></div>
+</div>
+</form>
+</div></div>
+{% endif %}
+</div></div>
+{% endblock %}

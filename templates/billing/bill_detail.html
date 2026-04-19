@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load hms_tags %}
+{% block title %}Bill — {{ bill.invoice_number }}{% endblock %}
+{% block page_title %}Bill Detail{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Invoice {{ bill.invoice_number }}</h1>
+  <div class="d-flex gap-2 no-print">
+    <a href="{% url 'billing:invoice_pdf' bill.pk %}" class="btn btn-outline-secondary" target="_blank"><i class="bi bi-printer me-1"></i>Print Invoice</a>
+    {% if bill.balance > 0 %}<a href="{% url 'payments:initiate_payment' bill.pk %}" class="btn btn-success"><i class="bi bi-credit-card me-1"></i>Pay Now</a>{% endif %}
+    {% if request.user.role == 'admin' %}<a href="{% url 'billing:bill_add_item' bill.pk %}" class="btn btn-outline-primary"><i class="bi bi-plus me-1"></i>Add Item</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-receipt me-2"></i>Bill Items</span>
+        <span class="badge-pill status-{{ bill.status|lower }}">{{ bill.status }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered mb-0" style="font-size:14px">
+          <thead class="table-light"><tr><th>Description</th><th>Type</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
+          <tbody>
+          {% for item in bill.items.all %}
+          <tr>
+            <td>{{ item.description }}</td>
+            <td><small>{{ item.item_type }}</small></td>
+            <td>{{ item.quantity }}</td>
+            <td>UGX {{ item.unit_price|floatformat:0 }}</td>
+            <td class="fw-bold">UGX {{ item.amount|floatformat:0 }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="5" class="text-center py-3 text-muted">No items</td></tr>
+          {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr><td colspan="4" class="text-end">Subtotal</td><td>UGX {{ bill.subtotal|floatformat:0 }}</td></tr>
+            {% if bill.discount > 0 %}<tr><td colspan="4" class="text-end text-success">Discount</td><td class="text-success">- UGX {{ bill.discount|floatformat:0 }}</td></tr>{% endif %}
+            {% if bill.tax > 0 %}<tr><td colspan="4" class="text-end">Tax</td><td>UGX {{ bill.tax|floatformat:0 }}</td></tr>{% endif %}
+            <tr class="fw-bold"><td colspan="4" class="text-end">TOTAL</td><td style="font-size:16px">UGX {{ bill.total|floatformat:0 }}</td></tr>
+            <tr style="color:#27ae60"><td colspan="4" class="text-end">Amount Paid</td><td>UGX {{ bill.amount_paid|floatformat:0 }}</td></tr>
+            <tr class="fw-bold" style="color:#e74c3c"><td colspan="4" class="text-end">Balance Due</td><td style="font-size:16px">UGX {{ bill.balance|floatformat:0 }}</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <!-- Payment History -->
+    <div class="card">
+      <div class="card-header"><i class="bi bi-credit-card me-2"></i>Payment History</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0" style="font-size:13px">
+          <thead><tr><th>Date</th><th>Method</th><th>Transaction ID</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for p in bill.payments.all %}
+          <tr>
+            <td>{{ p.created_at|date:"d M Y H:i" }}</td>
+            <td>{{ p.get_payment_method_display }}</td>
+            <td>{{ p.transaction_id|default:"—" }}</td>
+            <td>UGX {{ p.amount|floatformat:0 }}</td>
+            <td><span class="badge-pill status-{{ p.status|lower }}">{{ p.status }}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="5" class="text-center py-3 text-muted">No payments yet</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-person me-2"></i>Patient</div>
+      <div class="card-body">
+        <div class="fw-bold"><a href="{% url 'patients:patient_detail' bill.patient.pk %}">{{ bill.patient.name }}</a></div>
+        <div style="font-size:13px;color:#888">{{ bill.patient.phone }}</div>
+        <div style="font-size:13px;color:#888">{{ bill.patient.address }}</div>
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-info-circle me-2"></i>Bill Info</div>
+      <div class="card-body" style="font-size:14px">
+        <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Invoice #</span><span>{{ bill.invoice_number }}</span></div>
+        <div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Date</span><span>{{ bill.date|date:"d M Y" }}</span></div>
+        {% if bill.due_date %}<div class="d-flex justify-content-between py-1 border-bottom"><span class="text-muted">Due Date</span><span>{{ bill.due_date|date:"d M Y" }}</span></div>{% endif %}
+        <div class="d-flex justify-content-between py-1"><span class="text-muted">Status</span><span class="badge-pill status-{{ bill.status|lower }}">{{ bill.status }}</span></div>
+      </div>
+    </div>
+    {% if request.user.role == 'admin' %}
+    <div class="card">
+      <div class="card-header">Update Status</div>
+      <div class="card-body">
+        <form method="post" action="{% url 'billing:bill_update_status' bill.pk %}">
+          {% csrf_token %}
+          <div class="mb-2"><select name="status" class="form-select form-select-sm">
+            {% for s in "Pending,Partial,Paid,Overdue,Cancelled"|split:"," %}
+            <option {% if bill.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select></div>
+          <button class="btn btn-sm btn-primary w-100">Update</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

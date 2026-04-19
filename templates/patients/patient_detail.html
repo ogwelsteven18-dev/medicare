@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}{{ patient.name }}{% endblock %}
+{% block page_title %}Patient: {{ patient.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ patient.name }}</h1>
+    <span class="badge-pill status-{{ patient.status|lower }}">{{ patient.status }}</span>
+    {% if patient.blood_type %}<span class="badge bg-danger ms-1">{{ patient.blood_type }}</span>{% endif %}
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if request.user.role in 'admin,nurse' or request.user.role == 'nurse' %}
+    <a href="{% url 'patients:add_vitals' patient.pk %}" class="btn btn-sm btn-outline-success"><i class="bi bi-heart-pulse me-1"></i>Record Vitals</a>
+    {% endif %}
+    {% if request.user.role == 'doctor' or request.user.role == 'admin' %}
+    <a href="{% url 'patients:add_medical_record' patient.pk %}" class="btn btn-sm btn-outline-info"><i class="bi bi-file-medical me-1"></i>Add Record</a>
+    <a href="{% url 'patients:add_lab_result' patient.pk %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-activity me-1"></i>Lab Result</a>
+    <a href="{% url 'pharmacy:prescription_create_for' patient.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-capsule me-1"></i>Prescribe</a>
+    {% endif %}
+    {% if request.user.role != 'patient' %}
+    <a href="{% url 'patients:patient_edit' patient.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
+    {% endif %}
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person me-2"></i>Patient Information</div>
+      <div class="card-body p-0">
+        <table class="table table-borderless table-sm mb-0 px-3" style="font-size:14px">
+          <tr><td class="ps-3 py-2" style="color:#888;width:40%">Age</td><td class="pe-3 py-2"><strong>{{ patient.age }} years</strong></td></tr>
+          <tr class="bg-light"><td class="ps-3 py-2" style="color:#888">Gender</td><td class="pe-3 py-2">{{ patient.gender }}</td></tr>
+          <tr><td class="ps-3 py-2" style="color:#888">Blood Type</td><td class="pe-3 py-2"><span class="badge bg-danger">{{ patient.blood_type|default:"—" }}</span></td></tr>
+          <tr class="bg-light"><td class="ps-3 py-2" style="color:#888">Phone</td><td class="pe-3 py-2">{{ patient.phone|default:"—" }}</td></tr>
+          <tr><td class="ps-3 py-2" style="color:#888">Address</td><td class="pe-3 py-2">{{ patient.address|default:"—" }}</td></tr>
+          <tr class="bg-light"><td class="ps-3 py-2" style="color:#888">Admitted</td><td class="pe-3 py-2">{{ patient.admission_date|date:"d M Y" }}</td></tr>
+          <tr><td class="ps-3 py-2" style="color:#888">Allergies</td><td class="pe-3 py-2">{{ patient.allergies|default:"None known" }}</td></tr>
+          <tr class="bg-light"><td class="ps-3 py-2" style="color:#888">Doctor</td><td class="pe-3 py-2">{% if patient.assigned_doctor %}Dr. {{ patient.assigned_doctor.get_full_name }}{% else %}—{% endif %}</td></tr>
+          <tr><td class="ps-3 py-2" style="color:#888">Emergency</td><td class="pe-3 py-2">{{ patient.emergency_contact|default:"—" }}<br>{% if patient.emergency_phone %}<small>{{ patient.emergency_phone }}</small>{% endif %}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#vitals"><i class="bi bi-heart-pulse me-1"></i>Vitals</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#records"><i class="bi bi-file-medical me-1"></i>Records</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#labs"><i class="bi bi-activity me-1"></i>Lab Results</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#appts"><i class="bi bi-calendar me-1"></i>Appointments</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#presc"><i class="bi bi-capsule me-1"></i>Prescriptions</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#bills"><i class="bi bi-receipt me-1"></i>Bills</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="vitals">
+        {% if vitals %}
+        <div class="timeline">
+        {% for v in vitals %}
+        <div class="timeline-item">
+          <div style="font-size:12px;color:#888;margin-bottom:6px"><i class="bi bi-clock me-1"></i>{{ v.date|date:"d M Y H:i" }} &middot; Recorded by {{ v.nurse.get_full_name|default:"Nurse" }}</div>
+          <div class="row g-2">
+            {% if v.temperature %}<div class="col-6 col-sm-4"><div class="card p-2 text-center" style="border:1px solid #f0f0f0"><div style="font-size:11px;color:#888">Temperature</div><div style="font-weight:700;color:#e74c3c">{{ v.temperature }}°C</div></div></div>{% endif %}
+            {% if v.blood_pressure %}<div class="col-6 col-sm-4"><div class="card p-2 text-center" style="border:1px solid #f0f0f0"><div style="font-size:11px;color:#888">Blood Pressure</div><div style="font-weight:700;color:#1a6b9a">{{ v.blood_pressure }}</div></div></div>{% endif %}
+            {% if v.pulse %}<div class="col-6 col-sm-4"><div class="card p-2 text-center" style="border:1px solid #f0f0f0"><div style="font-size:11px;color:#888">Pulse</div><div style="font-weight:700;color:#27ae60">{{ v.pulse }} bpm</div></div></div>{% endif %}
+            {% if v.weight %}<div class="col-6 col-sm-4"><div class="card p-2 text-center" style="border:1px solid #f0f0f0"><div style="font-size:11px;color:#888">Weight</div><div style="font-weight:700">{{ v.weight }} kg</div></div></div>{% endif %}
+            {% if v.oxygen_saturation %}<div class="col-6 col-sm-4"><div class="card p-2 text-center" style="border:1px solid #f0f0f0"><div style="font-size:11px;color:#888">SpO2</div><div style="font-weight:700;color:#8e44ad">{{ v.oxygen_saturation }}%</div></div></div>{% endif %}
+          </div>
+          {% if v.notes %}<div style="font-size:13px;color:#666;margin-top:6px"><i class="bi bi-chat-left me-1"></i>{{ v.notes }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        </div>
+        {% else %}<div class="text-center py-5 text-muted"><i class="bi bi-heart-pulse" style="font-size:40px;opacity:.2"></i><div class="mt-2">No vitals recorded yet.</div></div>{% endif %}
+      </div>
+      <div class="tab-pane fade" id="records">
+        {% if medical_records %}
+        <div class="timeline">
+        {% for r in medical_records %}
+        <div class="timeline-item">
+          <div style="font-size:12px;color:#888;margin-bottom:4px">{{ r.date|date:"d M Y" }} &middot; Dr. {{ r.doctor.get_full_name }}</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:4px">{{ r.diagnosis }}</div>
+          {% if r.symptoms %}<div style="font-size:13px;color:#555"><strong>Symptoms:</strong> {{ r.symptoms }}</div>{% endif %}
+          {% if r.treatment %}<div style="font-size:13px;color:#555"><strong>Treatment:</strong> {{ r.treatment }}</div>{% endif %}
+          {% if r.notes %}<div style="font-size:13px;color:#777;margin-top:4px">{{ r.notes }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        </div>
+        {% else %}<div class="text-center py-5 text-muted"><i class="bi bi-file-medical" style="font-size:40px;opacity:.2"></i><div class="mt-2">No medical records.</div></div>{% endif %}
+      </div>
+      <div class="tab-pane fade" id="labs">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm">
+            <thead><tr><th>Test Name</th><th>Result</th><th>Ref Range</th><th>Status</th><th>Date</th><th>File</th></tr></thead>
+            <tbody>
+            {% for lr in lab_results %}
+            <tr>
+              <td><strong>{{ lr.test_name }}</strong></td>
+              <td style="max-width:200px">{{ lr.result|truncatechars:80 }}</td>
+              <td style="font-size:12px;color:#888">{{ lr.reference_range|default:"—" }}</td>
+              <td><span class="badge-pill status-{{ lr.status|lower }}">{{ lr.status }}</span></td>
+              <td style="font-size:12px;color:#888;white-space:nowrap">{{ lr.date|date:"d M Y" }}</td>
+              <td>{% if lr.file %}<a href="{{ lr.file.url }}" class="btn btn-sm btn-outline-primary py-0 px-2" target="_blank"><i class="bi bi-download"></i></a>{% else %}—{% endif %}</td>
+            </tr>
+            {% empty %}<tr><td colspan="6" class="text-center py-4 text-muted">No lab results</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="appts">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm">
+            <thead><tr><th>Doctor</th><th>Date & Time</th><th>Type</th><th>Reason</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for a in appointments %}
+            <tr>
+              <td>Dr. {{ a.doctor.get_full_name|default:"—" }}</td>
+              <td style="white-space:nowrap">{{ a.date|date:"d M Y" }}<br><small class="text-muted">{{ a.time|time:"H:i" }}</small></td>
+              <td><small>{{ a.get_appointment_type_display }}</small></td>
+              <td style="font-size:12px;max-width:150px">{{ a.reason|truncatechars:50 }}</td>
+              <td><span class="badge-pill status-{{ a.status|lower }}">{{ a.status }}</span></td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="text-center py-4 text-muted">No appointments</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="presc">
+        {% for rx in prescriptions %}
+        <div class="card mb-3" style="border:1px solid #e8f4fd">
+          <div class="card-body py-2 px-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><strong>Prescription #{{ rx.pk }}</strong> &middot; <small class="text-muted">{{ rx.date|date:"d M Y" }}</small></div>
+              <span class="badge-pill status-{{ rx.status|lower }}">{{ rx.status }}</span>
+            </div>
+            <div style="font-size:13px;color:#888;margin-bottom:8px">Prescribed by Dr. {{ rx.doctor.get_full_name }}</div>
+            {% for item in rx.items.all %}
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom" style="font-size:13px">
+              <div><strong>{{ item.medicine.name }}</strong> <span class="text-muted">· {{ item.dosage }}</span></div>
+              <div class="text-muted">{{ item.frequency }} for {{ item.duration }} · Qty: {{ item.quantity }}</div>
+            </div>
+            {% endfor %}
+            {% if rx.notes %}<div style="font-size:12px;color:#888;margin-top:6px">{{ rx.notes }}</div>{% endif %}
+          </div>
+        </div>
+        {% empty %}<div class="text-center py-5 text-muted"><i class="bi bi-capsule" style="font-size:40px;opacity:.2"></i><div class="mt-2">No prescriptions issued.</div></div>
+        {% endfor %}
+      </div>
+      <div class="tab-pane fade" id="bills">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm">
+            <thead><tr><th>Invoice #</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for b in bills %}
+            <tr>
+              <td><a href="{% url 'billing:bill_detail' b.pk %}" style="font-size:13px">{{ b.invoice_number }}</a></td>
+              <td style="font-size:12px;white-space:nowrap">{{ b.date|date:"d M Y" }}</td>
+              <td style="white-space:nowrap">UGX {{ b.total|floatformat:0 }}</td>
+              <td style="color:#27ae60;white-space:nowrap">UGX {{ b.amount_paid|floatformat:0 }}</td>
+              <td style="color:#e74c3c;white-space:nowrap">UGX {{ b.balance|floatformat:0 }}</td>
+              <td><span class="badge-pill status-{{ b.status|lower }}">{{ b.status }}</span></td>
+              <td>
+                <a href="{% url 'billing:bill_detail' b.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2 me-1"><i class="bi bi-eye"></i></a>
+                {% if b.balance > 0 %}<a href="{% url 'payments:initiate_payment' b.pk %}" class="btn btn-sm btn-success py-0 px-2">Pay</a>{% endif %}
+              </td>
+            </tr>
+            {% empty %}<tr><td colspan="7" class="text-center py-4 text-muted">No bills</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

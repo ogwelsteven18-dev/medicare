@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Invoice {{ bill.invoice_number }}</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:30px;color:#333}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #1a6b9a}
+.logo{font-size:24px;font-weight:700;color:#1a6b9a}.logo-sub{font-size:12px;color:#666}
+.invoice-title{font-size:28px;font-weight:700;color:#1a6b9a;text-align:right}
+.invoice-meta{text-align:right;font-size:13px;color:#666;margin-top:4px}
+.parties{display:flex;justify-content:space-between;margin-bottom:30px}
+.party-box{background:#f8f9fa;padding:16px;border-radius:8px;width:48%}
+.party-box h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#888}
+.party-box .name{font-weight:700;font-size:16px}
+table{width:100%;border-collapse:collapse;margin-bottom:20px}
+th{background:#1a6b9a;color:#fff;padding:10px 12px;text-align:left;font-size:13px}
+td{padding:9px 12px;border-bottom:1px solid #eee;font-size:14px}
+tr:nth-child(even){background:#f9f9f9}
+.totals{float:right;width:300px}
+.totals table td{border:none;padding:6px 8px}
+.totals .grand-total{font-size:18px;font-weight:700;color:#1a6b9a;border-top:2px solid #1a6b9a}
+.paid{color:#27ae60;font-weight:700}.balance{color:#e74c3c;font-weight:700}
+.footer{margin-top:60px;text-align:center;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px}
+.status-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:600}
+.status-paid{background:#d5f5e3;color:#1e8449}.status-pending{background:#fef9e7;color:#9a7d0a}
+@media print{button{display:none}}
+</style>
+</head>
+<body>
+<button onclick="window.print()" style="position:fixed;top:20px;right:20px;background:#1a6b9a;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer">Print Invoice</button>
+<div class="header">
+  <div><div class="logo">🏥 MediCare</div><div class="logo-sub">Hospital Management System</div><div style="font-size:12px;color:#888;margin-top:4px">Kampala, Uganda &middot; +256 700 000 000</div></div>
+  <div><div class="invoice-title">INVOICE</div><div class="invoice-meta">{{ bill.invoice_number }}<br>Date: {{ bill.date|date:"d M Y" }}{% if bill.due_date %}<br>Due: {{ bill.due_date|date:"d M Y" }}{% endif %}</div>
+  <div style="margin-top:8px"><span class="status-badge status-{{ bill.status|lower }}">{{ bill.status }}</span></div></div>
+</div>
+<div class="parties">
+  <div class="party-box"><h4>Bill To</h4><div class="name">{{ bill.patient.name }}</div><div style="font-size:13px;margin-top:4px">{{ bill.patient.phone }}</div><div style="font-size:13px">{{ bill.patient.address }}</div></div>
+  <div class="party-box"><h4>Issued By</h4><div class="name">MediCare Hospital</div><div style="font-size:13px;margin-top:4px">info@medicare.ug</div><div style="font-size:13px">www.medicare.ug</div></div>
+</div>
+<table>
+  <thead><tr><th>#</th><th>Description</th><th>Type</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
+  <tbody>
+  {% for item in bill.items.all %}
+  <tr><td>{{ forloop.counter }}</td><td>{{ item.description }}</td><td>{{ item.item_type }}</td><td>{{ item.quantity }}</td><td>UGX {{ item.unit_price|floatformat:0 }}</td><td><strong>UGX {{ item.amount|floatformat:0 }}</strong></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<div class="totals">
+  <table>
+    <tr><td>Subtotal</td><td><strong>UGX {{ bill.subtotal|floatformat:0 }}</strong></td></tr>
+    {% if bill.discount > 0 %}<tr><td style="color:#27ae60">Discount</td><td style="color:#27ae60">- UGX {{ bill.discount|floatformat:0 }}</td></tr>{% endif %}
+    {% if bill.tax > 0 %}<tr><td>Tax</td><td>UGX {{ bill.tax|floatformat:0 }}</td></tr>{% endif %}
+    <tr class="grand-total"><td>TOTAL DUE</td><td>UGX {{ bill.total|floatformat:0 }}</td></tr>
+    <tr><td class="paid">Amount Paid</td><td class="paid">UGX {{ bill.amount_paid|floatformat:0 }}</td></tr>
+    <tr><td class="balance">Balance</td><td class="balance">UGX {{ bill.balance|floatformat:0 }}</td></tr>
+  </table>
+</div>
+<div style="clear:both"></div>
+<div class="footer">Thank you for choosing MediCare Hospital &middot; Generated on {{ today|date:"d M Y" }} &middot; This is a computer-generated document.</div>
+</body>
+</html>

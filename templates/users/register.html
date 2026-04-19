@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Register — MediCare HMS{% endblock %}
+{% block content %}
+<style>
+.auth-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f2744,#1a6b9a);padding:24px}
+.auth-card{background:#fff;border-radius:20px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3);padding:40px}
+.btn-register{background:linear-gradient(135deg,#1a6b9a,#0f2744);color:#fff;border:none;padding:12px;border-radius:10px;font-size:15px;font-weight:600;width:100%}
+.btn-register:hover{opacity:.9;color:#fff}
+</style>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="text-center mb-4">
+      <div style="font-size:40px">🏥</div>
+      <h2 style="font-weight:700;color:#0f2744;margin-top:8px">Create Account</h2>
+      <p style="color:#888;font-size:14px">Join MediCare Hospital Management System</p>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-6">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Email</label>
+          {{ form.email }}
+        </div>
+        <div class="col-6">
+          <label class="form-label">Phone</label>
+          {{ form.phone }}
+        </div>
+        <div class="col-6">
+          <label class="form-label">Role</label>
+          {{ form.role }}
+        </div>
+        <div class="col-6">
+          <label class="form-label">Password</label>
+          {{ form.password1 }}
+        </div>
+        <div class="col-6">
+          <label class="form-label">Confirm Password</label>
+          {{ form.password2 }}
+        </div>
+        {% if form.non_field_errors %}
+        <div class="col-12"><div class="alert alert-danger py-2">{{ form.non_field_errors.0 }}</div></div>
+        {% endif %}
+        <div class="col-12 mt-2">
+          <button type="submit" class="btn btn-register"><i class="bi bi-person-plus me-2"></i>Create Account</button>
+        </div>
+      </div>
+    </form>
+    <p class="text-center mt-3" style="font-size:14px;color:#666">
+      Already have an account? <a href="{% url 'users:login' %}" style="color:#1a6b9a;font-weight:600;text-decoration:none">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

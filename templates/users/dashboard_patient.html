@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}My Health Portal — MediCare HMS{% endblock %}
+{% block page_title %}My Health Portal{% endblock %}
+{% block content %}
+<style>
+.portal-card{border-radius:14px;padding:20px;text-decoration:none;display:flex;align-items:center;gap:16px;transition:all .2s;border:1px solid #eee}
+.portal-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.1);border-color:transparent}
+.portal-card .pc-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.portal-card .pc-title{font-weight:600;font-size:14px;color:#2c3e50;margin-bottom:2px}
+.portal-card .pc-sub{font-size:12px;color:#888}
+.bill-item{padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center}
+.bill-item:last-child{border-bottom:none}
+.health-metric{text-align:center;padding:16px}
+.health-metric .hm-val{font-size:22px;font-weight:700;line-height:1}
+.health-metric .hm-label{font-size:11px;color:#888;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>Hello, {{ user.first_name }}! 👋</h1>
+    <p style="color:#888;margin:0;font-size:14px">{{ today|date:"l, d F Y" }} &nbsp;·&nbsp; <span class="badge-pill role-patient">Patient</span></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-calendar-plus me-1"></i>Book Appointment</a>
+    <a href="{% url 'appointments:consultation_create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-stethoscope me-1"></i>Request Consultation</a>
+  </div>
+</div>
+
+<!-- Patient Health Summary -->
+{% if patient %}
+<div class="card mb-4" style="background:linear-gradient(135deg,#0f2744,#1a6b9a);color:#fff;border:none">
+  <div class="card-body p-4">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">My Health Profile</div>
+        <h4 style="margin:0;font-size:20px;font-weight:700">{{ patient.name }}</h4>
+        <div style="opacity:.8;margin-top:4px;font-size:13px">
+          {{ patient.gender }}, {{ patient.age }} years old &nbsp;·&nbsp;
+          <span style="background:rgba(255,255,255,.2);padding:2px 10px;border-radius:12px;font-weight:600">{{ patient.blood_type|default:"Blood type not set" }}</span>
+        </div>
+        {% if patient.allergies %}<div style="margin-top:8px;font-size:12px;background:rgba(231,76,60,.3);padding:4px 12px;border-radius:8px;display:inline-block"><i class="bi bi-exclamation-triangle me-1"></i>Allergies: {{ patient.allergies }}</div>{% endif %}
+      </div>
+      <div class="col-md-6 mt-3 mt-md-0">
+        <div class="row g-2">
+          <div class="col-4"><div style="background:rgba(255,255,255,.15);border-radius:12px;text-align:center;padding:12px"><div style="font-size:22px;font-weight:700">{{ my_appointments }}</div><div style="font-size:11px;opacity:.75">Appointments</div></div></div>
+          <div class="col-4"><div style="background:rgba(255,255,255,.15);border-radius:12px;text-align:center;padding:12px"><div style="font-size:22px;font-weight:700">{{ my_prescriptions }}</div><div style="font-size:11px;opacity:.75">Prescriptions</div></div></div>
+          <div class="col-4"><div style="background:rgba(255,255,255,.15);border-radius:12px;text-align:center;padding:12px"><div style="font-size:22px;font-weight:700;color:{% if my_pending_bills > 0 %}#f39c12{% else %}#2ecc71{% endif %}">{{ my_pending_bills }}</div><div style="font-size:11px;opacity:.75">Pending Bills</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Quick Portal Links -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <a href="{% url 'appointments:appointment_create' %}" class="portal-card" style="background:#e8f4fd">
+      <div class="pc-icon" style="background:#1a6b9a;color:#fff"><i class="bi bi-calendar-plus-fill"></i></div>
+      <div><div class="pc-title">Book Appointment</div><div class="pc-sub">Schedule a visit with a doctor</div></div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4">
+    <a href="{% url 'appointments:consultation_create' %}" class="portal-card" style="background:#d5f5e3">
+      <div class="pc-icon" style="background:#27ae60;color:#fff"><i class="bi bi-stethoscope"></i></div>
+      <div><div class="pc-title">Request Consultation</div><div class="pc-sub">Get a doctor's consultation</div></div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4">
+    <a href="{% url 'pharmacy:order_create' %}" class="portal-card" style="background:#fef9e7">
+      <div class="pc-icon" style="background:#f39c12;color:#fff"><i class="bi bi-bag-plus-fill"></i></div>
+      <div><div class="pc-title">Order Medicine</div><div class="pc-sub">Order from pharmacy</div></div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4">
+    <a href="{% url 'billing:bill_list' %}" class="portal-card" style="background:#fde8e8">
+      <div class="pc-icon" style="background:#e74c3c;color:#fff"><i class="bi bi-receipt-cutoff"></i></div>
+      <div><div class="pc-title">My Bills</div><div class="pc-sub">View and pay outstanding bills</div></div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4">
+    <a href="{% url 'pharmacy:prescription_list' %}" class="portal-card" style="background:#e8d5f5">
+      <div class="pc-icon" style="background:#8e44ad;color:#fff"><i class="bi bi-file-medical-fill"></i></div>
+      <div><div class="pc-title">My Prescriptions</div><div class="pc-sub">View issued prescriptions</div></div>
+    </a>
+  </div>
+  {% if patient %}
+  <div class="col-6 col-md-4">
+    <a href="{% url 'patients:patient_detail' patient.pk %}" class="portal-card" style="background:#d6eaf8">
+      <div class="pc-icon" style="background:#2980b9;color:#fff"><i class="bi bi-activity"></i></div>
+      <div><div class="pc-title">My Health Records</div><div class="pc-sub">Vitals, labs &amp; history</div></div>
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Active content -->
+<div class="row g-3">
+  <!-- Upcoming appointments -->
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>My Appointments</span>
+        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      {% for a in recent_appointments %}
+      <div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:14px">
+        <div style="min-width:46px;text-align:center;background:#e8f4fd;border-radius:10px;padding:6px">
+          <div style="font-size:16px;font-weight:700;color:#1a6b9a;line-height:1">{{ a.date|date:"d" }}</div>
+          <div style="font-size:11px;color:#888">{{ a.date|date:"M" }}</div>
+        </div>
+        <div class="flex-grow-1">
+          <div style="font-weight:500;font-size:14px">Dr. {{ a.doctor.get_full_name|default:"—" }}</div>
+          <div style="font-size:12px;color:#888">{{ a.get_appointment_type_display }} at {{ a.time|time:"H:i" }}</div>
+        </div>
+        <span class="badge-pill status-{{ a.status|lower }}" style="font-size:11px">{{ a.status }}</span>
+      </div>
+      {% empty %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-calendar-x" style="font-size:40px;opacity:.2"></i>
+        <div class="mt-2">No appointments yet</div>
+        <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary btn-sm mt-3">Book Now</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Bills -->
+  <div class="col-lg-6">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-receipt me-2"></i>My Bills</span>
+        <a href="{% url 'billing:bill_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      {% for b in recent_bills %}
+      <div class="bill-item">
+        <div>
+          <div style="font-size:13px;font-weight:500">{{ b.invoice_number }}</div>
+          <div style="font-size:12px;color:#888">{{ b.date|date:"d M Y" }}</div>
+        </div>
+        <div class="text-end">
+          <div style="font-weight:700;font-size:15px">UGX {{ b.total|floatformat:0 }}</div>
+          <div class="d-flex gap-1 align-items-center justify-content-end mt-1">
+            <span class="badge-pill status-{{ b.status|lower }}" style="font-size:11px">{{ b.status }}</span>
+            {% if b.balance > 0 %}<a href="{% url 'payments:initiate_payment' b.pk %}" class="btn btn-sm btn-success py-0 px-2" style="font-size:11px"><i class="bi bi-credit-card me-1"></i>Pay</a>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-4 text-muted"><i class="bi bi-receipt" style="font-size:32px;opacity:.2"></i><div class="mt-2" style="font-size:13px">No bills outstanding</div></div>
+      {% endfor %}
+    </div>
+
+    <!-- Lab Results -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-activity me-2"></i>Recent Lab Results</span>
+        {% if patient %}<a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-sm btn-outline-primary">View All</a>{% endif %}
+      </div>
+      {% for lr in recent_lab_results %}
+      <div style="padding:12px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:500;font-size:14px">{{ lr.test_name }}</div>
+          <div style="font-size:12px;color:#888">{{ lr.date|date:"d M Y" }} &middot; Dr. {{ lr.doctor.get_full_name|default:"—" }}</div>
+        </div>
+        <div class="text-end">
+          <span class="badge-pill status-{{ lr.status|lower }}">{{ lr.status }}</span>
+          {% if lr.file %}<div class="mt-1"><a href="{{ lr.file.url }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px" target="_blank"><i class="bi bi-download"></i></a></div>{% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-4 text-muted"><i class="bi bi-activity" style="font-size:32px;opacity:.2"></i><div class="mt-2" style="font-size:13px">No lab results yet</div></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

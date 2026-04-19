@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Payment Receipt</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:30px;background:#f0f4f8;color:#333}
+.receipt{max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.receipt-header{background:linear-gradient(135deg,#1a6b9a,#0f2744);color:#fff;padding:30px;text-align:center}
+.receipt-header .checkmark{font-size:56px}
+.receipt-header h2{margin:8px 0 4px;font-size:22px}
+.receipt-header .amount{font-size:36px;font-weight:700;margin-top:8px}
+.receipt-body{padding:24px}
+.receipt-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #eee;font-size:14px}
+.receipt-row:last-child{border-bottom:none}
+.receipt-row .label{color:#888}
+.receipt-row .value{font-weight:600}
+.receipt-footer{background:#f8f9fa;padding:16px;text-align:center;font-size:12px;color:#888}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:13px;background:#d5f5e3;color:#1e8449;font-weight:600}
+@media print{body{background:#fff;padding:0}button{display:none}}
+</style>
+</head>
+<body>
+<div style="text-align:center;margin-bottom:16px;display:block" class="no-print">
+  <button onclick="window.print()" style="background:#1a6b9a;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px">🖨️ Print Receipt</button>
+  <a href="{% url 'billing:bill_list' %}" style="margin-left:12px;background:#f0f0f0;color:#333;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;text-decoration:none">Back to Bills</a>
+</div>
+<div class="receipt">
+  <div class="receipt-header">
+    <div class="checkmark">✅</div>
+    <h2>Payment Confirmed</h2>
+    <div style="font-size:13px;opacity:.8">{{ payment.created_at|date:"d M Y H:i" }}</div>
+    <div class="amount">UGX {{ payment.amount|floatformat:0 }}</div>
+    <span class="badge">{{ payment.status }}</span>
+  </div>
+  <div class="receipt-body">
+    <div class="receipt-row"><span class="label">Receipt #</span><span class="value">RCP-{{ payment.pk }}</span></div>
+    <div class="receipt-row"><span class="label">Patient</span><span class="value">{{ payment.patient.name }}</span></div>
+    <div class="receipt-row"><span class="label">Payment Method</span><span class="value">{{ payment.get_payment_method_display }}</span></div>
+    {% if payment.phone_number %}<div class="receipt-row"><span class="label">Phone</span><span class="value">{{ payment.phone_number }}</span></div>{% endif %}
+    <div class="receipt-row"><span class="label">Transaction ID</span><span class="value" style="font-size:12px;font-family:monospace">{{ payment.transaction_id|default:"—" }}</span></div>
+    {% if payment.bill %}<div class="receipt-row"><span class="label">Invoice</span><span class="value">{{ payment.bill.invoice_number }}</span></div>{% endif %}
+    <div class="receipt-row"><span class="label">Amount Paid</span><span class="value" style="color:#1a6b9a;font-size:18px">UGX {{ payment.amount|floatformat:0 }}</span></div>
+    {% if payment.bill and payment.bill.balance > 0 %}<div class="receipt-row"><span class="label">Remaining Balance</span><span class="value" style="color:#e74c3c">UGX {{ payment.bill.balance|floatformat:0 }}</span></div>{% endif %}
+  </div>
+  <div class="receipt-footer">🏥 MediCare Hospital Management System<br>Thank you for your payment!<br>Generated: {{ today|date:"d M Y" }}</div>
+</div>
+</body>
+</html>

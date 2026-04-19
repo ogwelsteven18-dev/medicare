@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Order Medicine{% endblock %}
+{% block page_title %}Order Medicine{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-9">
+<div class="card"><div class="card-header"><i class="bi bi-bag-plus me-2"></i>Place Medicine Order</div>
+<div class="card-body p-4">
+<form method="post" id="orderForm">{% csrf_token %}
+  {% if patients %}
+  <div class="mb-4"><label class="form-label">Patient *</label>
+    <select name="patient" class="form-select" required>
+      <option value="">Select Patient...</option>
+      {% for p in patients %}<option value="{{ p.pk }}">{{ p.name }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <h6 class="mb-3">Select Medicines</h6>
+  <div class="table-responsive mb-3">
+    <table class="table table-bordered" style="font-size:14px" id="orderTable">
+      <thead class="table-light"><tr><th>Medicine</th><th>Unit Price</th><th>Stock</th><th>Quantity</th><th>Subtotal</th><th></th></tr></thead>
+      <tbody id="orderItems">
+        <tr id="row_0">
+          <td><select name="med_0" class="form-select form-select-sm" onchange="updateRow(0)" required>
+            <option value="">Select...</option>
+            {% for m in medicines %}<option value="{{ m.pk }}" data-price="{{ m.unit_price }}" data-stock="{{ m.stock_quantity }}">{{ m.name }}</option>{% endfor %}
+          </select></td>
+          <td id="price_0" class="text-muted">—</td>
+          <td id="stock_0" class="text-muted">—</td>
+          <td><input type="number" name="qty_0" id="qty_0" class="form-control form-control-sm" value="1" min="1" onchange="updateRow(0)" style="width:80px"></td>
+          <td id="sub_0" class="fw-bold">UGX 0</td>
+          <td></td>
+        </tr>
+      </tbody>
+      <tfoot><tr><td colspan="4" class="text-end fw-bold">Total:</td><td colspan="2" class="fw-bold text-success" id="grandTotal">UGX 0</td></tr></tfoot>
+    </table>
+  </div>
+  <button type="button" class="btn btn-outline-primary btn-sm mb-3" onclick="addRow()"><i class="bi bi-plus me-1"></i>Add Another Medicine</button><br>
+  <button type="submit" class="btn btn-primary me-2"><i class="bi bi-bag-check me-1"></i>Place Order</button>
+  <a href="{% url 'pharmacy:order_list' %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+</div></div>
+</div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const medicines = { {% for m in medicines %}'{{ m.pk }}': { price: {{ m.unit_price }}, stock: {{ m.stock_quantity }} },{% endfor %} };
+let rowCount = 1;
+function updateRow(i) {
+  const sel = document.querySelector(`[name="med_${i}"]`);
+  const qty = document.getElementById(`qty_${i}`);
+  const opt = sel.options[sel.selectedIndex];
+  const medId = opt.value;
+  if (!medId) { document.getElementById(`price_${i}`).textContent = '—'; document.getElementById(`stock_${i}`).textContent = '—'; document.getElementById(`sub_${i}`).textContent = 'UGX 0'; } else {
+    const m = medicines[medId];
+    document.getElementById(`price_${i}`).textContent = 'UGX ' + m.price.toLocaleString();
+    document.getElementById(`stock_${i}`).textContent = m.stock + ' units';
+    document.getElementById(`sub_${i}`).textContent = 'UGX ' + (m.price * parseInt(qty.value || 1)).toLocaleString();
+  }
+  updateTotal();
+}
+function updateTotal() {
+  let total = 0;
+  document.querySelectorAll('[id^="sub_"]').forEach(el => {
+    const val = parseInt(el.textContent.replace(/[^0-9]/g, '')) || 0;
+    total += val;
+  });
+  document.getElementById('grandTotal').textContent = 'UGX ' + total.toLocaleString();
+}
+function addRow() {
+  const i = rowCount;
+  const tbody = document.getElementById('orderItems');
+  const tr = document.createElement('tr');
+  tr.id = `row_${i}`;
+  tr.innerHTML = `<td><select name="med_${i}" class="form-select form-select-sm" onchange="updateRow(${i})"><option value="">Select...</option>${Object.entries(medicines).map(([id,m],_,arr) => {
+    const sel = document.querySelector('[name="med_0"]');
+    let opts = '';
+    for(let o of document.querySelector('[name="med_0"]').options) { if(o.value) opts += \`<option value="\${o.value}" data-price="\${medicines[o.value]?.price}">\${o.text}</option>\`; }
+    return opts;
+  })[0] || ''}</select></td><td id="price_${i}">—</td><td id="stock_${i}">—</td><td><input type="number" name="qty_${i}" id="qty_${i}" class="form-control form-control-sm" value="1" min="1" onchange="updateRow(${i})" style="width:80px"></td><td id="sub_${i}" class="fw-bold">UGX 0</td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove();updateTotal()"><i class="bi bi-trash"></i></button></td>`;
+  // Better approach: clone first row
+  const firstRow = document.getElementById('row_0').cloneNode(true);
+  firstRow.id = `row_${i}`;
+  firstRow.querySelectorAll('[id]').forEach(el => { el.id = el.id.replace('_0', `_${i}`); });
+  firstRow.querySelectorAll('[name]').forEach(el => { el.name = el.name.replace('_0', `_${i}`); });
+  firstRow.querySelectorAll('select').forEach(el => { el.value = ''; el.onchange = () => updateRow(i); });
+  firstRow.querySelectorAll('input[type=number]').forEach(el => { el.value = 1; el.onchange = () => updateRow(i); });
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button'; removeBtn.className = 'btn btn-sm btn-outline-danger';
+  removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+  removeBtn.onclick = () => { firstRow.remove(); updateTotal(); };
+  firstRow.lastElementChild.appendChild(removeBtn);
+  tbody.appendChild(firstRow);
+  rowCount++;
+}
+</script>
+{% endblock %}

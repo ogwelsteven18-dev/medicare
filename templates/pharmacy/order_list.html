@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load hms_tags %}
+{% block title %}Medicine Orders{% endblock %}
+{% block page_title %}Medicine Orders{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-bag-fill me-2"></i>Medicine Orders</h1>
+  <a href="{% url 'pharmacy:order_create' %}" class="btn btn-primary"><i class="bi bi-bag-plus me-1"></i>New Order</a>
+</div>
+<div class="card"><div class="table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Order #</th><th>Patient</th><th>Items</th><th>Total Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+    <tr>
+      <td>#{{ o.pk }}</td>
+      <td><a href="{% url 'patients:patient_detail' o.patient.pk %}" style="text-decoration:none;font-weight:500">{{ o.patient.name }}</a></td>
+      <td>{{ o.items.count }} item(s)</td>
+      <td class="fw-bold">UGX {{ o.total_amount|floatformat:0 }}</td>
+      <td><span class="badge-pill status-{{ o.status|lower }}">{{ o.status }}</span></td>
+      <td style="font-size:13px;white-space:nowrap">{{ o.created_at|date:"d M Y" }}</td>
+      <td>
+        {% if request.user.role == 'admin' %}
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-secondary py-0 px-2 dropdown-toggle" data-bs-toggle="dropdown">Update</button>
+          <ul class="dropdown-menu">
+            {% for s in "Processing,Ready,Dispensed,Cancelled"|split:"," %}
+            <li><form method="post" action="{% url 'pharmacy:order_update_status' o.pk %}">{% csrf_token %}<input type="hidden" name="status" value="{{ s }}"><button class="dropdown-item" type="submit">{{ s }}</button></form></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="text-center py-5 text-muted">No orders found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

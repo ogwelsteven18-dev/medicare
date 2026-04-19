@@ -1,0 +1,5 @@
+/* MediCare HMS Custom Styles */
+.badge-pill { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
+.cursor-pointer { cursor: pointer; }
+.method-card { transition: all .2s; }
+.method-card:hover { border-color: #1a6b9a !important; background: #e8f4fd !important; }

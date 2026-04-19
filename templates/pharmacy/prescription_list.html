@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Prescriptions{% endblock %}
+{% block page_title %}Prescriptions{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-file-medical-fill me-2"></i>Prescriptions</h1>
+  {% if request.user.role in 'admin,doctor' %}<a href="{% url 'pharmacy:prescription_create' %}" class="btn btn-primary"><i class="bi bi-plus me-1"></i>New Prescription</a>{% endif %}
+</div>
+<div class="card"><div class="table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>ID</th><th>Patient</th><th>Doctor</th><th>Date</th><th>Items</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for rx in prescriptions %}
+    <tr>
+      <td>#{{ rx.pk }}</td>
+      <td><a href="{% url 'patients:patient_detail' rx.patient.pk %}" style="text-decoration:none;font-weight:500">{{ rx.patient.name }}</a></td>
+      <td>Dr. {{ rx.doctor.get_full_name|default:"—" }}</td>
+      <td style="font-size:13px;white-space:nowrap">{{ rx.date|date:"d M Y" }}</td>
+      <td>{{ rx.items.count }} item(s)</td>
+      <td><span class="badge-pill status-{{ rx.status|lower }}">{{ rx.status }}</span></td>
+      <td><a href="{% url 'pharmacy:prescription_detail' rx.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-eye"></i></a></td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="text-center py-5 text-muted">No prescriptions found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

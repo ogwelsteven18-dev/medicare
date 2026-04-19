@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Login — MediCare HMS{% endblock %}
+{% block content %}
+<style>
+.auth-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f2744 0%,#1a6b9a 50%,#0f2744 100%);padding:20px}
+.auth-card{background:#fff;border-radius:20px;overflow:hidden;width:100%;max-width:960px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;min-height:560px}
+.auth-left{flex:1;background:linear-gradient(160deg,#1a6b9a,#0f2744);padding:48px 40px;color:#fff;display:flex;flex-direction:column;justify-content:center}
+.auth-left h2{font-size:28px;font-weight:700;margin-bottom:12px}
+.auth-left p{opacity:.8;font-size:15px;line-height:1.7}
+.feature-item{display:flex;align-items:center;gap:12px;margin-top:20px;font-size:14px}
+.feature-icon{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.auth-right{flex:1;padding:48px 40px;display:flex;flex-direction:column;justify-content:center}
+.auth-right h1{font-size:26px;font-weight:700;color:#0f2744;margin-bottom:6px}
+.auth-right .subtitle{color:#888;font-size:14px;margin-bottom:32px}
+.btn-login{background:linear-gradient(135deg,#1a6b9a,#0f2744);color:#fff;border:none;padding:12px;border-radius:10px;font-size:15px;font-weight:600;width:100%;transition:opacity .2s}
+.btn-login:hover{opacity:.9;color:#fff}
+.divider{text-align:center;color:#aaa;margin:20px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#e0e0e0}
+.divider::before{left:0}.divider::after{right:0}
+@media(max-width:680px){.auth-left{display:none}.auth-right{padding:32px 24px}}
+</style>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-left">
+      <div style="font-size:48px;margin-bottom:20px">🏥</div>
+      <h2>MediCare Hospital<br>Management System</h2>
+      <p>A complete, modern solution for managing hospital operations — patients, appointments, billing, pharmacy, and more.</p>
+      <div class="feature-item"><div class="feature-icon"><i class="bi bi-shield-check"></i></div>Role-based secure access</div>
+      <div class="feature-item"><div class="feature-icon"><i class="bi bi-phone"></i></div>MTN & Airtel Mobile Money</div>
+      <div class="feature-item"><div class="feature-icon"><i class="bi bi-graph-up"></i></div>Real-time analytics & reports</div>
+      <div class="feature-item"><div class="feature-icon"><i class="bi bi-bell"></i></div>Smart notification system</div>
+    </div>
+    <div class="auth-right">
+      <div style="font-size:36px;margin-bottom:12px">👋</div>
+      <h1>Welcome back</h1>
+      <p class="subtitle">Sign in to your MediCare account</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
+            <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="Enter username" required autofocus>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock"></i></span>
+            <input type="password" name="password" id="pwdInput" class="form-control border-start-0 ps-0" placeholder="Enter password" required>
+            <button type="button" class="input-group-text bg-light" onclick="togglePwd()"><i class="bi bi-eye" id="eyeIcon"></i></button>
+          </div>
+        </div>
+        {% if form.errors %}<div class="alert alert-danger py-2">Invalid username or password.</div>{% endif %}
+        <button type="submit" class="btn btn-login mb-3"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</button>
+      </form>
+      <div class="divider">or</div>
+      <div class="text-center">
+        <p style="font-size:14px;color:#666">Don't have an account?
+          <a href="{% url 'users:register' %}" style="color:#1a6b9a;font-weight:600;text-decoration:none">Register here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>function togglePwd(){const i=document.getElementById('pwdInput'),e=document.getElementById('eyeIcon');i.type=i.type==='password'?'text':'password';e.className='bi bi-eye'+(i.type==='text'?'-slash':'')}</script>
+{% endblock %}

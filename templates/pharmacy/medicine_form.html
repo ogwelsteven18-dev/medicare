@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7">
+<div class="card"><div class="card-header"><i class="bi bi-capsule me-2"></i>{{ title }}</div>
+<div class="card-body p-4">
+<form method="post">{% csrf_token %}
+<div class="row g-3">
+  <div class="col-md-8"><label class="form-label">Medicine Name *</label>{{ form.name }}</div>
+  <div class="col-md-4"><label class="form-label">Category</label>{{ form.category }}</div>
+  <div class="col-12"><label class="form-label">Generic Name</label>{{ form.generic_name }}</div>
+  <div class="col-12"><label class="form-label">Manufacturer</label>{{ form.manufacturer }}</div>
+  <div class="col-md-4"><label class="form-label">Unit Price (UGX)</label>{{ form.unit_price }}</div>
+  <div class="col-md-4"><label class="form-label">Stock Quantity</label>{{ form.stock_quantity }}</div>
+  <div class="col-md-4"><label class="form-label">Reorder Level</label>{{ form.reorder_level }}</div>
+  <div class="col-12"><label class="form-label">Description</label>{{ form.description }}</div>
+  <div class="col-12"><button type="submit" class="btn btn-primary me-2">Save Medicine</button><a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-outline-secondary">Cancel</a></div>
+</div>
+</form>
+</div></div>
+</div></div>
+{% endblock %}

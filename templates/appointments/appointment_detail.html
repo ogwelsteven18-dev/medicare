@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load hms_tags %}
+{% block title %}Appointment Detail{% endblock %}
+{% block page_title %}Appointment Detail{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7">
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-calendar me-2"></i>Appointment #{{ appointment.pk }}</span>
+    <span class="badge-pill status-{{ appointment.status|lower }}">{{ appointment.status }}</span>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label text-muted">Patient</label><div class="fw-bold"><a href="{% url 'patients:patient_detail' appointment.patient.pk %}">{{ appointment.patient.name }}</a></div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Doctor</label><div class="fw-bold">Dr. {{ appointment.doctor.get_full_name|default:"—" }}</div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Date</label><div class="fw-bold">{{ appointment.date|date:"d M Y" }}</div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Time</label><div class="fw-bold">{{ appointment.time|time:"H:i" }}</div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Type</label><div>{{ appointment.get_appointment_type_display }}</div></div>
+      <div class="col-md-6"><label class="form-label text-muted">Fee</label><div class="fw-bold text-success">UGX {{ appointment.fee|floatformat:0 }}</div></div>
+      <div class="col-12"><label class="form-label text-muted">Reason</label><div>{{ appointment.reason }}</div></div>
+      {% if appointment.notes %}<div class="col-12"><label class="form-label text-muted">Notes</label><div>{{ appointment.notes }}</div></div>{% endif %}
+    </div>
+    {% if request.user.role in 'admin,doctor,nurse' %}
+    <hr>
+    <div class="d-flex gap-2 flex-wrap">
+      {% for s in "Confirmed,Completed,Cancelled,Rescheduled"|split:"," %}
+      <form method="post" action="{% url 'appointments:appointment_update_status' appointment.pk %}">
+        {% csrf_token %}<input type="hidden" name="status" value="{{ s }}">
+        <button class="btn btn-sm btn-outline-secondary" type="submit">Mark {{ s }}</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+</div></div>
+{% endblock %}

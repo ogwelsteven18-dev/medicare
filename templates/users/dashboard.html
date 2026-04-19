@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — MediCare HMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Good day, {{ user.first_name|default:user.username }}! 👋</h1>
+    <p style="color:#888;margin:0;font-size:14px">{{ today|date:"l, d F Y" }} &nbsp;·&nbsp; <span class="badge-pill role-{{ user.role }}">{{ user.role|capfirst }}</span></p>
+  </div>
+  {% if user.role == 'admin' %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'patients:patient_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Add Patient</a>
+    <a href="{% url 'appointments:appointment_create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-calendar-plus me-1"></i>New Appointment</a>
+  </div>
+  {% elif user.role == 'patient' %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-calendar-plus me-1"></i>Book Appointment</a>
+    <a href="{% url 'appointments:consultation_create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-stethoscope me-1"></i>Request Consultation</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if user.role == 'admin' %}
+<!-- ADMIN DASHBOARD -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="background:linear-gradient(135deg,#1a6b9a,#134f73)">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-value">{{ total_patients }}</div>
+      <div class="stat-label">Total Patients</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="background:linear-gradient(135deg,#27ae60,#1e8449)">
+      <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+      <div class="stat-value">{{ total_appointments }}</div>
+      <div class="stat-label">Total Appointments</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="background:linear-gradient(135deg,#f39c12,#d68910)">
+      <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+      <div class="stat-value">{{ pending_bills }}</div>
+      <div class="stat-label">Pending Bills</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="background:linear-gradient(135deg,#8e44ad,#6c3483)">
+      <div class="stat-icon"><i class="bi bi-cash-coin"></i></div>
+      <div class="stat-value" style="font-size:22px">UGX {{ total_revenue|floatformat:0 }}</div>
+      <div class="stat-label">Total Revenue</div>
+    </div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card p-3 text-center"><div style="font-size:28px;color:#1a6b9a;font-weight:700">{{ total_doctors }}</div><div style="font-size:13px;color:#888">Doctors</div></div></div>
+  <div class="col-md-3"><div class="card p-3 text-center"><div style="font-size:28px;color:#27ae60;font-weight:700">{{ total_nurses }}</div><div style="font-size:13px;color:#888">Nurses</div></div></div>
+  <div class="col-md-3"><div class="card p-3 text-center"><div style="font-size:28px;color:#f39c12;font-weight:700">{{ pending_appointments }}</div><div style="font-size:13px;color:#888">Pending Appts</div></div></div>
+  <div class="col-md-3"><a href="{% url 'reports:dashboard' %}" class="card p-3 text-center text-decoration-none d-flex flex-column align-items-center justify-content-center" style="min-height:80px"><i class="bi bi-graph-up" style="font-size:28px;color:#8e44ad"></i><div style="font-size:13px;color:#888;margin-top:6px">View Reports</div></a></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>Recent Appointments</span>
+        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for a in recent_appointments %}
+          <tr>
+            <td><a href="{% url 'patients:patient_detail' a.patient.pk %}" style="text-decoration:none;color:inherit;font-weight:500">{{ a.patient.name }}</a></td>
+            <td>Dr. {{ a.doctor.get_full_name|default:a.doctor.username }}</td>
+            <td>{{ a.date|date:"d M Y" }}</td>
+            <td><span class="badge-pill status-{{ a.status|lower }}">{{ a.status }}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="text-center py-4 text-muted">No appointments yet</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-plus me-2"></i>Recent Patients</span>
+        <a href="{% url 'patients:patient_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <ul class="list-group list-group-flush">
+      {% for p in recent_patients %}
+      <li class="list-group-item d-flex align-items-center gap-3 py-3">
+        <div style="width:38px;height:38px;border-radius:50%;background:#e8f4fd;color:#1a6b9a;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">{{ p.name|first|upper }}</div>
+        <div class="flex-1"><div style="font-weight:500;font-size:14px">{{ p.name }}</div><div style="font-size:12px;color:#888">{{ p.gender }}, {{ p.age }} yrs &middot; {{ p.blood_type }}</div></div>
+        <span class="badge-pill status-{{ p.status|lower }}">{{ p.status }}</span>
+      </li>
+      {% empty %}<li class="list-group-item text-center py-4 text-muted">No patients yet</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% elif user.role == 'doctor' %}
+<!-- DOCTOR DASHBOARD -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="stat-card" style="background:linear-gradient(135deg,#1a6b9a,#134f73)">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-value">{{ my_patients }}</div>
+      <div class="stat-label">My Patients</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card" style="background:linear-gradient(135deg,#27ae60,#1e8449)">
+      <div class="stat-icon"><i class="bi bi-calendar-day"></i></div>
+      <div class="stat-value">{{ todays_appointments }}</div>
+      <div class="stat-label">Today's Appointments</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card" style="background:linear-gradient(135deg,#f39c12,#d68910)">
+      <div class="stat-icon"><i class="bi bi-stethoscope"></i></div>
+      <div class="stat-value">{{ pending_consultations }}</div>
+      <div class="stat-label">Pending Consultations</div>
+    </div>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>My Appointments</span>
+        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Patient</th><th>Date & Time</th><th>Type</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+          {% for a in recent_appointments %}
+          <tr>
+            <td><a href="{% url 'patients:patient_detail' a.patient.pk %}" style="text-decoration:none;font-weight:500">{{ a.patient.name }}</a></td>
+            <td>{{ a.date|date:"d M" }} at {{ a.time|time:"H:i" }}</td>
+            <td><small>{{ a.get_appointment_type_display }}</small></td>
+            <td><span class="badge-pill status-{{ a.status|lower }}">{{ a.status }}</span></td>
+            <td><a href="{% url 'appointments:appointment_detail' a.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-2">View</a></td>
+          </tr>
+          {% empty %}<tr><td colspan="5" class="text-center py-4 text-muted">No appointments</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-lines-fill me-2"></i>My Patients</span>
+        <a href="{% url 'patients:patient_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <ul class="list-group list-group-flush">
+      {% for p in recent_patients %}
+      <li class="list-group-item d-flex align-items-center gap-3 py-3">
+        <div style="width:38px;height:38px;border-radius:50%;background:#e8f4fd;color:#1a6b9a;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">{{ p.name|first|upper }}</div>
+        <div class="flex-1"><div style="font-weight:500;font-size:14px">{{ p.name }}</div><div style="font-size:12px;color:#888">{{ p.age }} yrs &middot; {{ p.blood_type }}</div></div>
+        <a href="{% url 'patients:patient_detail' p.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2">View</a>
+      </li>
+      {% empty %}<li class="list-group-item text-center py-4 text-muted">No assigned patients</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% elif user.role == 'nurse' %}
+<!-- NURSE DASHBOARD -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="stat-card" style="background:linear-gradient(135deg,#1a6b9a,#134f73)">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-value">{{ total_patients }}</div>
+      <div class="stat-label">Active Patients</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card" style="background:linear-gradient(135deg,#27ae60,#1e8449)">
+      <div class="stat-icon"><i class="bi bi-calendar-day"></i></div>
+      <div class="stat-value">{{ todays_appointments }}</div>
+      <div class="stat-label">Today's Appointments</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card p-3 d-flex flex-column align-items-center justify-content-center text-center" style="height:100%">
+      <a href="{% url 'patients:patient_create' %}" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Add Patient</a>
+      <small class="text-muted mt-2">Register new patient</small>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-person-lines-fill me-2"></i>Recent Active Patients</span>
+    <a href="{% url 'patients:patient_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Name</th><th>Age</th><th>Blood Type</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for p in recent_patients %}
+      <tr>
+        <td><a href="{% url 'patients:patient_detail' p.pk %}" style="text-decoration:none;font-weight:500">{{ p.name }}</a></td>
+        <td>{{ p.age }}</td>
+        <td><span class="badge bg-danger">{{ p.blood_type|default:"—" }}</span></td>
+        <td><span class="badge-pill status-{{ p.status|lower }}">{{ p.status }}</span></td>
+        <td>
+          <a href="{% url 'patients:add_vitals' p.pk %}" class="btn btn-sm btn-outline-success py-0 px-2 me-1">Vitals</a>
+          <a href="{% url 'patients:patient_detail' p.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2">View</a>
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="5" class="text-center py-4 text-muted">No patients</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% elif user.role == 'patient' %}
+<!-- PATIENT DASHBOARD -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="background:linear-gradient(135deg,#1a6b9a,#134f73)">
+      <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+      <div class="stat-value">{{ my_appointments }}</div>
+      <div class="stat-label">My Appointments</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card" style="background:linear-gradient(135deg,#e74c3c,#c0392b)">
+      <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+      <div class="stat-value">{{ my_bills }}</div>
+      <div class="stat-label">Pending Bills</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center border-0 shadow-sm d-flex flex-column align-items-center justify-content-center">
+      <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-calendar-plus me-1"></i>Book Appointment</a>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center border-0 shadow-sm d-flex flex-column align-items-center justify-content-center">
+      <a href="{% url 'pharmacy:order_create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-bag-plus me-1"></i>Order Medicine</a>
+    </div>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>My Appointments</span>
+        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Doctor</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody>
+          {% for a in recent_appointments %}
+          <tr>
+            <td>Dr. {{ a.doctor.get_full_name|default:a.doctor.username }}</td>
+            <td>{{ a.date|date:"d M Y" }}</td>
+            <td><span class="badge-pill status-{{ a.status|lower }}">{{ a.status }}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="3" class="text-center py-4 text-muted">No appointments yet</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-receipt me-2"></i>My Bills</span>
+        <a href="{% url 'billing:bill_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <ul class="list-group list-group-flush">
+      {% for b in recent_bills %}
+      <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+        <div><div style="font-size:14px;font-weight:500">{{ b.invoice_number }}</div><div style="font-size:12px;color:#888">{{ b.date|date:"d M Y" }}</div></div>
+        <div class="text-end">
+          <div style="font-weight:600">UGX {{ b.total|floatformat:0 }}</div>
+          <div class="d-flex gap-1 align-items-center">
+            <span class="badge-pill status-{{ b.status|lower }}">{{ b.status }}</span>
+            {% if b.status == 'Pending' %}<a href="{% url 'payments:initiate_payment' b.pk %}" class="btn btn-sm btn-success py-0 px-2" style="font-size:12px">Pay</a>{% endif %}
+          </div>
+        </div>
+      </li>
+      {% empty %}<li class="list-group-item text-center py-4 text-muted">No bills</li>
+      {% endfor %}
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-activity me-2"></i>Recent Lab Results</span>
+        {% if patient %}<a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-sm btn-outline-primary">View All</a>{% endif %}
+      </div>
+      <ul class="list-group list-group-flush">
+      {% for lr in recent_lab_results %}
+      <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+        <div><div style="font-size:14px;font-weight:500">{{ lr.test_name }}</div><div style="font-size:12px;color:#888">{{ lr.date|date:"d M Y" }}</div></div>
+        <span class="badge-pill status-{{ lr.status|lower }}">{{ lr.status }}</span>
+      </li>
+      {% empty %}<li class="list-group-item text-center py-4 text-muted">No lab results</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

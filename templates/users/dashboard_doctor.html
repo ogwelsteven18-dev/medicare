@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Dashboard — MediCare HMS{% endblock %}
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block content %}
+<style>
+.appt-card{border-radius:12px;padding:16px;border-left:4px solid;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.appt-card .time-badge{min-width:60px;text-align:center;font-size:13px;font-weight:700;color:#1a6b9a;background:#e8f4fd;border-radius:8px;padding:6px}
+.patient-row{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #f5f5f5}
+.patient-row:last-child{border-bottom:none}
+.patient-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1a6b9a,#0f2744);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>Welcome, Dr. {{ user.first_name }}! 🩺</h1>
+    <p style="color:#888;margin:0;font-size:14px">{{ today|date:"l, d F Y" }} &nbsp;·&nbsp; <span class="badge-pill role-doctor">Doctor</span></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'appointments:consultation_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-stethoscope me-1"></i>New Consultation</a>
+    <a href="{% url 'pharmacy:prescription_create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-capsule me-1"></i>Write Prescription</a>
+  </div>
+</div>
+
+<!-- Doctor KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-left:4px solid #1a6b9a">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px"><i class="bi bi-people-fill me-1"></i>My Patients</div>
+      <div style="font-size:36px;font-weight:700;color:#1a6b9a;line-height:1">{{ my_patients }}</div>
+      <div style="font-size:12px;color:#888;margin-top:6px">Assigned to me</div>
+      <a href="{% url 'patients:patient_list' %}" style="font-size:12px;color:#1a6b9a;text-decoration:none;margin-top:8px;display:block">View all →</a>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-left:4px solid #27ae60">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px"><i class="bi bi-calendar-day me-1"></i>Today's Appointments</div>
+      <div style="font-size:36px;font-weight:700;color:#27ae60;line-height:1">{{ todays_appointments }}</div>
+      <div style="font-size:12px;color:#888;margin-top:6px">Scheduled for today</div>
+      <a href="{% url 'appointments:appointment_list' %}" style="font-size:12px;color:#27ae60;text-decoration:none;margin-top:8px;display:block">View schedule →</a>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-left:4px solid #f39c12">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px"><i class="bi bi-stethoscope me-1"></i>Pending Consultations</div>
+      <div style="font-size:36px;font-weight:700;color:#f39c12;line-height:1">{{ pending_consultations }}</div>
+      <div style="font-size:12px;color:#888;margin-top:6px">Awaiting your review</div>
+      <a href="{% url 'appointments:consultation_list' %}" style="font-size:12px;color:#f39c12;text-decoration:none;margin-top:8px;display:block">Review →</a>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100" style="border-left:4px solid #8e44ad">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px"><i class="bi bi-file-medical me-1"></i>Prescriptions Issued</div>
+      <div style="font-size:36px;font-weight:700;color:#8e44ad;line-height:1">{{ prescriptions_issued }}</div>
+      <div style="font-size:12px;color:#888;margin-top:6px">Total issued by me</div>
+      <a href="{% url 'pharmacy:prescription_list' %}" style="font-size:12px;color:#8e44ad;text-decoration:none;margin-top:8px;display:block">View all →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Doctor Tools Row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>Today's Appointments</span>
+        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-sm btn-outline-primary">Full Schedule</a>
+      </div>
+      <div>
+      {% for a in todays_appointment_list %}
+      <div class="appt-card" style="border-color:{% if a.status == 'Confirmed' %}#27ae60{% elif a.status == 'Completed' %}#1a6b9a{% else %}#f39c12{% endif %};background:{% if a.status == 'Confirmed' %}#d5f5e3{% elif a.status == 'Completed' %}#e8f4fd{% else %}#fef9e7{% endif %}">
+        <div class="time-badge">{{ a.time|time:"H:i" }}</div>
+        <div class="flex-grow-1">
+          <div style="font-weight:600;font-size:14px"><a href="{% url 'patients:patient_detail' a.patient.pk %}" style="text-decoration:none;color:inherit">{{ a.patient.name }}</a></div>
+          <div style="font-size:12px;color:#666">{{ a.get_appointment_type_display }} &middot; {{ a.reason|truncatechars:40 }}</div>
+        </div>
+        <div class="text-end">
+          <span class="badge-pill status-{{ a.status|lower }}" style="font-size:11px">{{ a.status }}</span>
+          <div class="mt-1"><a href="{% url 'appointments:appointment_detail' a.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px">View</a></div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-5 text-muted"><i class="bi bi-calendar-check" style="font-size:40px;opacity:.2"></i><div class="mt-2">No appointments today</div></div>
+      {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-lines-fill me-2"></i>My Patients</span>
+        <a href="{% url 'patients:patient_list' %}" class="btn btn-sm btn-outline-primary">All Patients</a>
+      </div>
+      {% for p in recent_patients %}
+      <div class="patient-row">
+        <div class="patient-avatar">{{ p.name|first|upper }}</div>
+        <div class="flex-grow-1">
+          <div style="font-weight:500;font-size:14px"><a href="{% url 'patients:patient_detail' p.pk %}" style="text-decoration:none;color:#2c3e50">{{ p.name }}</a></div>
+          <div style="font-size:12px;color:#888">{{ p.age }} yrs, {{ p.gender }} &middot; <span class="badge bg-danger" style="font-size:10px">{{ p.blood_type|default:"?" }}</span></div>
+        </div>
+        <div class="d-flex flex-column gap-1 align-items-end">
+          <span class="badge-pill status-{{ p.status|lower }}" style="font-size:11px">{{ p.status }}</span>
+          <div class="d-flex gap-1">
+            <a href="{% url 'patients:add_medical_record' p.pk %}" class="btn btn-sm btn-outline-info py-0 px-1" style="font-size:11px" title="Add Record"><i class="bi bi-file-medical"></i></a>
+            <a href="{% url 'pharmacy:prescription_create_for' p.pk %}" class="btn btn-sm btn-outline-primary py-0 px-1" style="font-size:11px" title="Prescribe"><i class="bi bi-capsule"></i></a>
+            <a href="{% url 'patients:add_lab_result' p.pk %}" class="btn btn-sm btn-outline-warning py-0 px-1" style="font-size:11px" title="Lab Result"><i class="bi bi-activity"></i></a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-5 text-muted">No patients assigned yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Recent Consultations -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-stethoscope me-2"></i>Recent Consultations</span>
+    <a href="{% url 'appointments:consultation_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Patient</th><th>Date</th><th>Chief Complaint</th><th>Diagnosis</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for c in recent_consultations %}
+      <tr>
+        <td><a href="{% url 'patients:patient_detail' c.patient.pk %}" style="text-decoration:none;font-weight:500">{{ c.patient.name }}</a></td>
+        <td style="font-size:13px;white-space:nowrap">{{ c.date|date:"d M Y" }}</td>
+        <td style="font-size:13px;max-width:180px">{{ c.chief_complaint|truncatechars:50 }}</td>
+        <td style="font-size:13px;color:#888;max-width:150px">{{ c.diagnosis|truncatechars:40|default:"—" }}</td>
+        <td><span class="badge-pill status-{{ c.status|lower }}">{{ c.status }}</span></td>
+        <td><a href="{% url 'appointments:consultation_detail' c.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a></td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="text-center py-4 text-muted">No consultations yet</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

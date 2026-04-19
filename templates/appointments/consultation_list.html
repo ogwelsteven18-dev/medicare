@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Consultations{% endblock %}
+{% block page_title %}Consultations{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-stethoscope me-2"></i>Consultations</h1>
+  <a href="{% url 'appointments:consultation_create' %}" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Request Consultation</a>
+</div>
+<div class="card"><div class="table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Chief Complaint</th><th>Fee</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for c in consultations %}
+    <tr>
+      <td><a href="{% url 'patients:patient_detail' c.patient.pk %}" style="text-decoration:none;font-weight:500">{{ c.patient.name }}</a></td>
+      <td>Dr. {{ c.doctor.get_full_name|default:"—" }}</td>
+      <td style="white-space:nowrap;font-size:13px">{{ c.date|date:"d M Y" }}</td>
+      <td style="max-width:180px;font-size:13px">{{ c.chief_complaint|truncatechars:60 }}</td>
+      <td>UGX {{ c.fee|floatformat:0 }}</td>
+      <td><span class="badge-pill status-{{ c.status|lower }}">{{ c.status }}</span></td>
+      <td><a href="{% url 'appointments:consultation_detail' c.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-eye"></i></a></td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="text-center py-5 text-muted">No consultations found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

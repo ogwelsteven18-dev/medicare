@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Pay Bill{% endblock %}
+{% block page_title %}Make Payment{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+<div class="card mb-3">
+  <div class="card-header"><i class="bi bi-receipt me-2"></i>Bill Summary</div>
+  <div class="card-body" style="font-size:14px">
+    <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Invoice</span><strong>{{ bill.invoice_number }}</strong></div>
+    <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Patient</span><strong>{{ bill.patient.name }}</strong></div>
+    <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Total Amount</span><strong>UGX {{ bill.total|floatformat:0 }}</strong></div>
+    <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">Already Paid</span><span style="color:#27ae60">UGX {{ bill.amount_paid|floatformat:0 }}</span></div>
+    <div class="d-flex justify-content-between py-2"><span class="text-muted fw-bold">Balance Due</span><span style="color:#e74c3c;font-size:20px;font-weight:700">UGX {{ bill.balance|floatformat:0 }}</span></div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header"><i class="bi bi-credit-card me-2"></i>Select Payment Method</div>
+  <div class="card-body p-4">
+  <form method="post" id="payForm">{% csrf_token %}
+    <div class="row g-3 mb-4">
+      <div class="col-6">
+        <label class="method-card p-3 border rounded text-center d-block cursor-pointer" style="cursor:pointer" for="mtn">
+          <input type="radio" name="payment_method" value="MTN_MOMO" id="mtn" class="d-none" required>
+          <div style="font-size:32px">📱</div>
+          <div style="font-weight:600;margin-top:4px">MTN MoMo</div>
+          <div style="font-size:12px;color:#888">Mobile Money</div>
+        </label>
+      </div>
+      <div class="col-6">
+        <label class="method-card p-3 border rounded text-center d-block" style="cursor:pointer" for="airtel">
+          <input type="radio" name="payment_method" value="AIRTEL" id="airtel" class="d-none">
+          <div style="font-size:32px">📲</div>
+          <div style="font-weight:600;margin-top:4px">Airtel Money</div>
+          <div style="font-size:12px;color:#888">Mobile Money</div>
+        </label>
+      </div>
+      <div class="col-6">
+        <label class="method-card p-3 border rounded text-center d-block" style="cursor:pointer" for="cash">
+          <input type="radio" name="payment_method" value="CASH" id="cash" class="d-none">
+          <div style="font-size:32px">💵</div>
+          <div style="font-weight:600;margin-top:4px">Cash</div>
+          <div style="font-size:12px;color:#888">At counter</div>
+        </label>
+      </div>
+      <div class="col-6">
+        <label class="method-card p-3 border rounded text-center d-block" style="cursor:pointer" for="card">
+          <input type="radio" name="payment_method" value="CARD" id="card" class="d-none">
+          <div style="font-size:32px">💳</div>
+          <div style="font-weight:600;margin-top:4px">Card</div>
+          <div style="font-size:12px;color:#888">Debit/Credit</div>
+        </label>
+      </div>
+    </div>
+    <div id="phoneField" class="mb-4" style="display:none">
+      <label class="form-label">Mobile Money Phone Number *</label>
+      <div class="input-group">
+        <span class="input-group-text">+256</span>
+        <input type="text" name="phone_number" id="phoneInput" class="form-control" placeholder="07XXXXXXXX" maxlength="15">
+      </div>
+      <div class="form-text">Enter the phone number registered with your mobile money account.</div>
+    </div>
+    <div class="d-grid">
+      <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-lock-fill me-2"></i>Pay UGX {{ bill.balance|floatformat:0 }}</button>
+    </div>
+  </form>
+  </div>
+</div>
+<div class="text-center mt-3" style="font-size:13px;color:#888"><i class="bi bi-shield-check me-1"></i>Secure payment &middot; Powered by MTN MoMo & Airtel Money APIs</div>
+</div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('.method-card').forEach(lbl => {
+  lbl.addEventListener('click', function() {
+    document.querySelectorAll('.method-card').forEach(l => l.style.borderColor = '');
+    this.style.borderColor = '#1a6b9a'; this.style.background = '#e8f4fd';
+    const m = this.querySelector('input').value;
+    document.getElementById('phoneField').style.display = ['MTN_MOMO','AIRTEL'].includes(m) ? '' : 'none';
+    if (['MTN_MOMO','AIRTEL'].includes(m)) document.getElementById('phoneInput').required = true;
+    else document.getElementById('phoneInput').required = false;
+  });
+});
+</script>
+{% endblock %}
